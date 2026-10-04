@@ -85,6 +85,67 @@ describe("Navigation", () => {
     assert.ok(document.getElementById("navToggle"));
     assert.ok(document.getElementById("navLinks"));
   });
+
+  test("nav toggle exposes accessible expanded state", () => {
+    const toggle = document.getElementById("navToggle");
+    assert.equal(toggle.getAttribute("aria-expanded"), "false");
+    assert.equal(toggle.getAttribute("aria-controls"), "navLinks");
+  });
+
+  test("nav offers a resume call-to-action", () => {
+    const resume = document.querySelector(".nav-resume");
+    assert.ok(resume, "resume CTA missing");
+    assert.equal(resume.id, "resumeBtn");
+  });
+
+  test("nav item spacing rules are defined", () => {
+    // Guard against the congestion regression: links must have real padding
+    // and the row must be laid out with a flex gap.
+    assert.match(html, /\.nav-links\s*\{[^}]*gap:\s*\d+px/s, "nav link gap missing");
+    assert.match(html, /\.nav-links a\s*\{[^}]*padding:\s*11px 18px/s, "nav link padding changed");
+    assert.match(html, /nav \.container\s*\{[^}]*gap:\s*28px/s, "nav container gap missing");
+  });
+});
+
+describe("Polish & animation", () => {
+  test("scroll progress element exists and is decorative", () => {
+    const bar = document.getElementById("scrollProgress");
+    assert.ok(bar, "scroll progress bar missing");
+    assert.equal(bar.getAttribute("aria-hidden"), "true");
+  });
+
+  test("reveal variants are declared", () => {
+    for (const variant of ["left", "right", "scale", "blur"]) {
+      assert.match(
+        html,
+        new RegExp(`\\.reveal\\[data-anim="${variant}"\\]`),
+        `missing data-anim="${variant}" style`
+      );
+    }
+  });
+
+  test("staggered reveal delays are configured", () => {
+    assert.match(html, /--delay:\s*0\.\d+s/, "no stagger delays defined");
+    assert.match(html, /\.timeline \.timeline-item:nth-child\(2\)\s*\{\s*--delay/, "timeline stagger missing");
+  });
+
+  test("reduced-motion users get a static page", () => {
+    assert.match(html, /@media \(prefers-reduced-motion: reduce\)/, "no reduced-motion block");
+    assert.match(
+      html,
+      /prefers-reduced-motion[\s\S]{0,400}\.hero h1 \.accent \{ animation: none; \}/,
+      "shimmer animation not disabled for reduced motion"
+    );
+  });
+
+  test("anchors account for the fixed nav height", () => {
+    assert.match(html, /section\[id\] \{ scroll-margin-top: 76px; \}/, "desktop scroll-margin missing");
+    assert.match(html, /section\[id\] \{ scroll-margin-top: 66px; \}/, "mobile scroll-margin missing");
+  });
+
+  test("external links animated via CSS only, no inline handlers", () => {
+    assert.doesNotMatch(html, /\son(click|load|error|mouseover|focus|submit)\s*=/i);
+  });
 });
 
 describe("Links", () => {
