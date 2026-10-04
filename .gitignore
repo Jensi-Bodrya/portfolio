@@ -1,0 +1,4 @@
+.set-secrets.py
+*.log
+.DS_Store
+node_modules/
