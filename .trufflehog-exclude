@@ -1,4 +1,9 @@
-# Paths excluded from trufflehog secret scanning
-# (test fixtures / docs that may contain example tokens)
+# Paths excluded from trufflehog secret scanning.
+# One regex per line.
+#
+# .git/ is excluded on purpose: actions/checkout writes an ephemeral
+# auth header into .git/config, which trufflehog otherwise flags as an
+# unverified "GitHub App Server-to-Server token" on every run.
+\.git/
 node_modules/
-package-lock.json
+package-lock\.json
