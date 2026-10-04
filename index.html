@@ -150,9 +150,9 @@
       border-top: 1px solid var(--border);
       animation: fadeUp 0.8s var(--ease) 0.6s both;
     }
-    .hero-stat h3 { font-size: 2rem; font-weight: 800; letter-spacing: -1px; }
-    .hero-stat h3 .num { background: linear-gradient(135deg, var(--text), var(--accent-soft)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .hero-stat h3 .suffix { color: var(--accent); }
+    .hero-stat .stat-num { font-size: 2rem; font-weight: 800; letter-spacing: -1px; }
+    .hero-stat .stat-num .num { background: linear-gradient(135deg, var(--text), var(--accent-soft)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-stat .stat-num .suffix { color: var(--accent); }
     .hero-stat p { font-size: 0.8rem; color: var(--text-dim); margin: 0; font-weight: 400; }
 
     /* ─── SECTION SHARED ─── */
@@ -428,7 +428,7 @@
       <li><a href="#projects">Projects</a></li>
       <li><a href="#skills">Skills</a></li>
       <li><a href="#contact">Contact</a></li>
-      <li><a href="#" class="nav-resume" onclick="window.print()">📄 Resume</a></li>
+      <li><a href="#" class="nav-resume" id="resumeBtn">📄 Resume</a></li>
     </ul>
   </div>
 </nav>
@@ -456,9 +456,9 @@
       </span>
     </div>
     <div class="hero-stats">
-      <div class="hero-stat"><h3><span class="num" data-target="2">0</span><span class="suffix">+</span></h3><p>Years of Experience</p></div>
-      <div class="hero-stat"><h3><span class="num" data-target="9.06">0.00</span></h3><p>B.Tech CGPA</p></div>
-      <div class="hero-stat"><h3><span class="num" data-target="3">0</span><span class="suffix">+</span></h3><p>Enterprise Projects</p></div>
+      <div class="hero-stat"><div class="stat-num"><span class="num" data-target="2">0</span><span class="suffix">+</span></div><p>Years of Experience</p></div>
+      <div class="hero-stat"><div class="stat-num"><span class="num" data-target="9.06">0.00</span></div><p>B.Tech CGPA</p></div>
+      <div class="hero-stat"><div class="stat-num"><span class="num" data-target="3">0</span><span class="suffix">+</span></div><p>Enterprise Projects</p></div>
     </div>
   </div>
 </section>
@@ -591,7 +591,7 @@
           <span class="tech-tag">REST APIs</span>
           <span class="tech-tag">Machine Learning</span>
         </div>
-        <a href="https://github.com/JENSIBODRYA/Team3" target="_blank" class="project-link">View on GitHub →</a>
+        <a href="https://github.com/JENSIBODRYA/Team3" target="_blank" rel="noopener noreferrer" class="project-link">View on GitHub →</a>
       </div>
       <div class="project-card reveal" data-category="side">
         <div class="project-tag">💻 Side Project</div>
@@ -603,7 +603,7 @@
           <span class="tech-tag">HTML/CSS</span>
           <span class="tech-tag">JavaScript</span>
         </div>
-        <a href="https://github.com/JENSIBODRYA/Instagram_Clone" target="_blank" class="project-link">View on GitHub →</a>
+        <a href="https://github.com/JENSIBODRYA/Instagram_Clone" target="_blank" rel="noopener noreferrer" class="project-link">View on GitHub →</a>
       </div>
     </div>
   </div>
@@ -742,9 +742,9 @@
     <div class="contact-links">
       <a href="mailto:jensibodrya@gmail.com">✉️ &nbsp; jensibodrya@gmail.com</a>
       <a href="tel:+918141807761">📱 &nbsp; +91 8141807761</a>
-      <a href="https://www.linkedin.com/in/jensi-bodrya/" target="_blank">💼 &nbsp; LinkedIn</a>
-      <a href="https://github.com/JENSIBODRYA" target="_blank">📂 &nbsp; GitHub</a>
-      <a href="https://jensibodrya.github.io/My_Portfolio/" target="_blank">🌐 &nbsp; Old Portfolio</a>
+      <a href="https://www.linkedin.com/in/jensi-bodrya/" target="_blank" rel="noopener noreferrer">💼 &nbsp; LinkedIn</a>
+      <a href="https://github.com/JENSIBODRYA" target="_blank" rel="noopener noreferrer">📂 &nbsp; GitHub</a>
+      <a href="https://jensibodrya.github.io/My_Portfolio/" target="_blank" rel="noopener noreferrer">🌐 &nbsp; Old Portfolio</a>
     </div>
   </div>
 </section>
@@ -796,6 +796,16 @@
   document.querySelectorAll('.nav-links a').forEach(a => {
     a.addEventListener('click', () => navLinks.classList.remove('active'));
   });
+
+  // ─── Resume / print ───
+  const resumeBtn = document.getElementById('resumeBtn');
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', e => {
+      e.preventDefault();
+      navLinks.classList.remove('active');
+      window.print();
+    });
+  }
 
   // ─── Typing effect ───
   (function(){

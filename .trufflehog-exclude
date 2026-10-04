@@ -1,0 +1,4 @@
+# Paths excluded from trufflehog secret scanning
+# (test fixtures / docs that may contain example tokens)
+node_modules/
+package-lock.json

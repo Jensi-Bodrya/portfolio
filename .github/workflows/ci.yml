@@ -10,71 +10,124 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run unit tests
+        run: npm test
+
   html-validate:
     name: HTML Validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install html5validator
+        run: pip install html5validator
       - name: Validate HTML
-        uses: Cyb3r-Jak3/html5validator-action@v7.2
-        with:
-          root: .
-          css: false
+        run: html5validator --root . --also-check-css false --show-warnings
 
   link-check:
     name: Broken Link Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check links
-        uses: untitaker/hyperlink@0.1.43
+      - name: Install lychee
+        uses: lycheeverse/lychee-action@v2
         with:
-          args: . --suffix html
+          args: >-
+            --no-progress
+            --verbose
+            --accept 200,206,429
+            --exclude-mail
+            --exclude 'jensi-bodrya.surge.sh'
+            --exclude 'linkedin.com'
+            --exclude 'instagram.com'
+            index.html
+          fail: true
 
   secrets-scan:
     name: Secret Scanning
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: truffleHog scan
-        uses: trufflesecurity/trufflehog@v3
         with:
-          extra_args: --results=verified,unknown --fail
+          fetch-depth: 0
+      - name: Install trufflehog
+        run: curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+      - name: Scan for secrets
+        run: trufflehog filesystem . --fail --no-update --exclude-paths=.trufflehog-exclude
 
   code-quality:
     name: Code Quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check for inline scripts
-        run: |
-          echo "Checking for inline event handlers..."
-          if grep -rn 'onclick=\|onload=\|onerror=' index.html; then
-            echo "Warning: inline event handlers found."
-          else
-            echo "OK: no inline event handlers."
-          fi
-      - name: Check file sizes
+      - name: Validate required files exist
         run: |
           for f in index.html; do
-            size=$(stat --format="%s" "$f")
-            echo "$f: ${size}B"
+            if [ ! -f "$f" ]; then
+              echo "Missing required file: $f"
+              exit 1
+            fi
+            echo "$f present"
           done
+      - name: Check page size budget
+        run: |
+          size=$(stat --format="%s" index.html)
+          echo "index.html = ${size}B"
+          if [ "$size" -gt 200000 ]; then
+            echo "index.html exceeds 200KB budget"
+            exit 1
+          fi
+      - name: Basic HTML sanity checks
+        run: |
+          for tag in '<!DOCTYPE html>' '<html' '</html>' '<head>' '</head>' '<body>' '</body>'; do
+            if ! grep -qF "$tag" index.html; then
+              echo "Missing required markup: $tag"
+              exit 1
+            fi
+          done
+          echo "All required tags present"
 
   deploy-dev:
     name: Deploy to Dev (Surge)
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: [html-validate, link-check, secrets-scan, code-quality]
+    needs: [unit-tests, html-validate, link-check, secrets-scan, code-quality]
     runs-on: ubuntu-latest
+    environment:
+      name: dev
+      url: https://jensi-bodrya-dev.surge.sh
     steps:
       - uses: actions/checkout@v4
       - name: Install Surge
         run: npm install -g surge
-      - name: Deploy to Surge
+      - name: Deploy to Surge dev
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
         run: surge ./ jensi-bodrya-dev.surge.sh
-      - name: Verify deployment
-        run: 'curl -s -o /dev/null -w "HTTP %{http_code}\n" https://jensi-bodrya-dev.surge.sh'
+      - name: Verify dev deployment
+        run: |
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" https://jensi-bodrya-dev.surge.sh)
+            if [ "$code" = "200" ]; then
+              echo "Dev deploy healthy (HTTP $code)"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $code, retrying..."
+            sleep 5
+          done
+          echo "Dev deploy did not come up"
+          exit 1
