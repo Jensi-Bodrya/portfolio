@@ -1,0 +1,88 @@
+name: Deploy image from chart repo
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy
+        required: true
+        default: dev-2
+        type: choice
+        options:
+          - dev
+          - dev-2
+          - prod
+      image:
+        description: Image id (branch-slug-shortsha). Leave blank to use environment pin.
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chart-deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.environment }} from chart image
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout deployment chart repo
+        uses: actions/checkout@v4
+        with:
+          repository: Jensi-Bodrya/portfolio-deploy
+          ref: main
+          token: ${{ secrets.DEPLOY_REPO_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Surge
+        run: npm install -g surge
+
+      - name: Deploy selected chart image
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+          TARGET_ENV: ${{ inputs.environment }}
+          TARGET_IMAGE: ${{ inputs.image }}
+        run: |
+          args=(--environment "$TARGET_ENV")
+          if [[ -n "$TARGET_IMAGE" ]]; then
+            args+=(--image "$TARGET_IMAGE")
+          fi
+          python3 scripts/deploy_env.py "${args[@]}"
+
+      - name: Record deployment
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          TARGET_ENV: ${{ inputs.environment }}
+          TARGET_IMAGE: ${{ inputs.image }}
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          sys.path.insert(0, "scripts")
+          from lib import find_image, load_env, load_index, write_env
+
+          target_env = os.environ["TARGET_ENV"]
+          env = load_env(target_env)
+          image_id = os.environ.get("TARGET_IMAGE") or env["image"]
+          entry = find_image(load_index(), image_id)
+          if not entry:
+              raise SystemExit(f"Image not found in chart: {image_id}")
+          if image_id != env["image"]:
+              write_env(target_env, {"image": image_id})
+          print(f"deployed {image_id} ({entry['branch']}@{entry['sha']}) to {target_env}")
+          PY
+          if [[ -n "$(git status --porcelain environments/)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add environments/
+            git commit -m "chore($TARGET_ENV): pin deployed image"
+            git push origin main
+          fi

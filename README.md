@@ -47,28 +47,13 @@ button only unlocks once every rule is satisfied.
 | Dev-2 | `main` **or** any feature branch | https://jensi-bodrya-dev2.surge.sh | manual (`workflow_dispatch`) |
 | Feature preview | one per branch | https://jensi-bodrya-&lt;branch-slug&gt;.surge.sh | automatic on push to that branch |
 
-### Feature branch previews
+### Feature branch builds and deployment
 
-Pushing to any branch other than `main` triggers **Preview & dev-2**, which:
+Each feature-branch push runs **Store build image**: it builds the site and publishes an immutable OCI image to `ghcr.io/jensi-bodrya/portfolio-images:<branch-slug>-<sha7>`. Source branch and commit SHA are attached as OCI metadata.
 
-1. Builds a traceable site artifact via `scripts/build_artifact.py` — the
-   artifact carries the source branch, commit sha, and build timestamp in
-   `build-meta.json`.
-2. Deploys that artifact to a preview domain derived from the branch name
-   (`feat/nav-spacing` becomes `jensi-bodrya-feat-nav-spacing.surge.sh`).
-3. Verifies the deployment returns HTTP 200 and writes the URL to the run summary.
+The separate [portfolio-deploy chart repo](https://github.com/Jensi-Bodrya/portfolio-deploy) is the source of truth for all environment image pins and deployment. Run its **Deploy environment** workflow, select `dev`, `dev-2`, or `prod`, and provide the exact OCI image ref. For `dev-2`, choose any image built from `main` or a feature branch. The workflow pulls that image from GHCR, deploys the site to the selected Surge domain, verifies HTTP 200, and records the image pin.
 
-### dev-2 testing environment
-
-`dev-2` is a scratch environment for checking a specific change in isolation.
-Run the **Preview & dev-2** workflow manually and set `source_branch`:
-
-- `source_branch: main` — deploy the current `main` build to dev-2.
-- `source_branch: feat/some-branch` — deploy that feature branch's build to
-  dev-2, so the exact changes in that branch can be reviewed live before merge.
-
-The build artifact's `build-meta.json` is printed in the job log, so it is
-always possible to confirm which branch and commit dev-2 is serving.
+Preview deploys remain branch-specific; image creation and all environment deployments are driven through the chart repo / GHCR image flow.
 
 ### Local preview
 
@@ -82,7 +67,7 @@ npm run serve
 python3 scripts/build_artifact.py --out build
 ```
 
-Creates `build/` containing the deployable site plus `build-meta.json`:
+Creates `build/` containing the deployable site plus `build-meta.json`.
 
 ```json
 {
