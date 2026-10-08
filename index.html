@@ -47,29 +47,88 @@
     /* ─── NAV ─── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(8, 8, 13, 0.88); backdrop-filter: blur(20px) saturate(1.4);
-      border-bottom: 1px solid var(--border);
-      transition: transform 0.4s var(--ease), background 0.3s;
+      background: rgba(8, 8, 13, 0.8);
+      backdrop-filter: blur(24px) saturate(1.6);
+      -webkit-backdrop-filter: blur(24px) saturate(1.6);
+      border-bottom: 1px solid transparent;
+      transition: transform 0.4s var(--ease), background 0.35s var(--ease),
+                  border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
     }
-    nav.scrolled { background: rgba(8, 8, 13, 0.96); }
-    nav .container { display: flex; align-items: center; justify-content: space-between; height: 68px; }
-    .nav-logo { font-weight: 800; font-size: 1.2rem; color: var(--text); letter-spacing: -0.5px; text-decoration: none; }
+    nav.scrolled {
+      background: rgba(8, 8, 13, 0.94);
+      border-bottom-color: var(--border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    }
+    nav .container {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 76px; gap: 28px;
+    }
+    .nav-logo {
+      font-weight: 800; font-size: 1.3rem; color: var(--text);
+      letter-spacing: -0.6px; text-decoration: none; white-space: nowrap;
+      transition: opacity 0.25s var(--ease);
+    }
     .nav-logo span { color: var(--accent); }
-    .nav-links { display: flex; gap: 4px; list-style: none; }
-    .nav-links a {
-      color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500;
-      padding: 8px 16px; border-radius: var(--radius-sm); transition: all 0.25s;
+    .nav-logo:hover { opacity: 0.82; }
+    .nav-links {
+      display: flex; align-items: center; gap: 4px; list-style: none;
       position: relative;
     }
-    .nav-links a:hover { color: var(--text); background: var(--bg-hover); }
-    .nav-links a.active { color: var(--accent-soft); background: rgba(124,92,252,0.1); }
-    .nav-resume {
-      background: var(--accent); color: #fff !important; margin-left: 8px;
-      border-radius: var(--radius-sm);
+    .nav-links a {
+      position: relative;
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.875rem; font-weight: 500;
+      letter-spacing: 0.005em; line-height: 1;
+      padding: 11px 18px; border-radius: 10px;
+      white-space: nowrap;
+      transition: color 0.28s var(--ease), background 0.28s var(--ease);
     }
-    .nav-resume:hover { background: #6a4ce8 !important; transform: translateY(-1px); }
-    .nav-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 8px; }
-    .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: 0.3s; }
+    .nav-links a::after {
+      content: ''; position: absolute; left: 18px; right: 18px; bottom: 5px;
+      height: 1.5px; border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transform: scaleX(0); transform-origin: left center;
+      transition: transform 0.4s var(--ease);
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::after { transform: scaleX(0.55); }
+    .nav-links a.active { color: var(--accent-soft); background: rgba(124, 92, 252, 0.09); }
+    .nav-links a.active::after { transform: scaleX(1); }
+    .nav-resume {
+      margin-left: 16px;
+      background: linear-gradient(135deg, var(--accent), #6a4ce8);
+      color: #fff !important;
+      font-weight: 600;
+      padding: 11px 22px !important;
+      border-radius: 100px !important;
+      box-shadow: 0 4px 18px rgba(124, 92, 252, 0.26);
+    }
+    .nav-resume::after { display: none; }
+    .nav-resume:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(124, 92, 252, 0.42) !important;
+    }
+    .nav-toggle {
+      display: none; flex-direction: column; gap: 5px; cursor: pointer;
+      background: none; border: none; padding: 10px; border-radius: 10px;
+      transition: background 0.25s var(--ease);
+    }
+    .nav-toggle:hover { background: var(--bg-hover); }
+    .nav-toggle span {
+      display: block; width: 22px; height: 2px; background: var(--text);
+      border-radius: 2px; transition: transform 0.35s var(--ease), opacity 0.25s var(--ease);
+    }
+    .nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── SCROLL PROGRESS ─── */
+    .scroll-progress {
+      position: fixed; top: 0; left: 0; height: 2px; width: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--pink));
+      z-index: 200; pointer-events: none;
+      transition: width 0.1s linear;
+    }
 
     /* ─── HERO ─── */
     #particles-canvas {
@@ -363,9 +422,82 @@
       text-align: center; font-size: 0.78rem; color: var(--text-dim);
     }
 
-    /* ─── REVEAL ─── */
-    .reveal { opacity: 0; transform: translateY(36px); transition: all 0.8s var(--ease); }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
+    /* ─── REVEAL + STAGGER ─── */
+    .reveal {
+      opacity: 0; transform: translateY(36px);
+      transition: opacity 0.8s var(--ease) var(--delay, 0s),
+                  transform 0.8s var(--ease) var(--delay, 0s);
+      will-change: opacity, transform;
+    }
+    .reveal[data-anim="left"]  { transform: translateX(-44px); }
+    .reveal[data-anim="right"] { transform: translateX(44px); }
+    .reveal[data-anim="scale"] { transform: scale(0.95); }
+    .reveal[data-anim="blur"]  { filter: blur(8px); transform: translateY(28px); }
+    .reveal.visible { opacity: 1; transform: none; filter: none; }
+
+    /* Staggered cascade inside grids */
+    .projects-grid .project-card:nth-child(2) { --delay: 0.1s; }
+    .skills-grid .skill-category:nth-child(2) { --delay: 0.07s; }
+    .skills-grid .skill-category:nth-child(3) { --delay: 0.14s; }
+    .skills-grid .skill-category:nth-child(4) { --delay: 0.21s; }
+    .skills-grid .skill-category:nth-child(5) { --delay: 0.28s; }
+    .extras-grid .extra-card:nth-child(2) { --delay: 0.1s; }
+    .edu-grid .edu-card:nth-child(2) { --delay: 0.08s; }
+    .edu-grid .edu-card:nth-child(3) { --delay: 0.16s; }
+    .timeline .timeline-item:nth-child(2) { --delay: 0.12s; }
+    .about-grid > *:nth-child(2) { --delay: 0.1s; }
+
+    /* Skill chips cascade in after their category lands */
+    .skill-category .skill-item {
+      opacity: 0; transform: translateY(10px) scale(0.94);
+      transition: opacity 0.45s var(--ease), transform 0.45s var(--ease-bounce);
+    }
+    .skill-category.visible .skill-item { opacity: 1; transform: none; }
+    .skill-category.visible .skill-item:nth-child(1) { transition-delay: 0.05s; }
+    .skill-category.visible .skill-item:nth-child(2) { transition-delay: 0.1s; }
+    .skill-category.visible .skill-item:nth-child(3) { transition-delay: 0.15s; }
+    .skill-category.visible .skill-item:nth-child(4) { transition-delay: 0.2s; }
+    .skill-category.visible .skill-item:nth-child(5) { transition-delay: 0.25s; }
+    .skill-category.visible .skill-item:nth-child(6) { transition-delay: 0.3s; }
+    .skill-category.visible .skill-item:nth-child(7) { transition-delay: 0.35s; }
+    .skill-category.visible .skill-item:nth-child(8) { transition-delay: 0.4s; }
+
+    /* Section label rule draws itself in */
+    .section-header.reveal .section-label::before {
+      transform: scaleX(0); transform-origin: left center;
+      transition: transform 0.7s var(--ease) 0.15s;
+    }
+    .section-header.reveal.visible .section-label::before { transform: scaleX(1); }
+
+    /* Hero accent shimmer */
+    .hero h1 .accent {
+      background: linear-gradient(120deg, var(--accent) 0%, var(--accent2) 40%, var(--accent-soft) 70%, var(--accent) 100%);
+      background-size: 220% 220%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: shimmer 7s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50%      { background-position: 100% 50%; }
+    }
+
+    /* Live pulse on the current role marker */
+    .timeline-item.current .timeline-dot::after {
+      content: ''; position: absolute; inset: -7px; border-radius: 50%;
+      border: 1px solid var(--green);
+      animation: ring-pulse 2.6s ease-out infinite;
+    }
+    @keyframes ring-pulse {
+      0%   { transform: scale(0.7); opacity: 0.75; }
+      100% { transform: scale(1.7); opacity: 0; }
+    }
+
+    /* Project card top-rule sweep */
+    .project-card::before { transform: scaleX(0); transform-origin: left center; transition: transform 0.45s var(--ease), opacity 0.45s; }
+    .project-card:hover::before { transform: scaleX(1); }
+
+    /* Icon nudge on hover for contact + project links */
+    .contact-links a, .project-card .project-link { will-change: transform; }
 
     /* ─── BACK TO TOP ─── */
     .back-to-top {
@@ -381,20 +513,36 @@
     .back-to-top:hover { transform: translateY(-3px) scale(1.08); }
 
     /* ─── MOBILE ─── */
-    @media (max-width: 768px) {
-      nav .container { height: 60px; }
+    @media (max-width: 900px) {
+      nav .container { height: 66px; gap: 16px; }
       .nav-links {
-        position: fixed; top: 60px; left: 0; right: 0;
-        background: rgba(8,8,13,0.98); backdrop-filter: blur(20px);
-        flex-direction: column; padding: 20px 24px; gap: 4px;
+        position: fixed; top: 66px; left: 0; right: 0;
+        background: rgba(8, 8, 13, 0.98);
+        backdrop-filter: blur(24px) saturate(1.6);
+        -webkit-backdrop-filter: blur(24px) saturate(1.6);
+        flex-direction: column; align-items: stretch;
+        padding: 18px 20px 24px; gap: 10px;
         border-bottom: 1px solid var(--border);
-        display: none;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+        opacity: 0; visibility: hidden; transform: translateY(-12px);
+        transition: opacity 0.3s var(--ease), transform 0.3s var(--ease), visibility 0.3s;
       }
-      .nav-links.active { display: flex; }
-      .nav-links a { font-size: 1rem; padding: 12px 16px; }
-      .nav-resume { margin-left: 0; margin-top: 4px; text-align: center; }
+      .nav-links.active { opacity: 1; visibility: visible; transform: translateY(0); }
+      .nav-links a {
+        display: flex; align-items: center; min-height: 52px;
+        font-family: var(--font); font-size: 0.98rem; font-weight: 500;
+        letter-spacing: 0.01em; line-height: 1.35; padding: 14px 18px; border-radius: 11px;
+      }
+      .nav-links a::after { left: 18px; right: 18px; bottom: 8px; }
+      .nav-links a:hover::after { transform: scaleX(0.35); }
+      .nav-links li + li { border-top: 1px solid rgba(255,255,255,.035); padding-top: 6px; }
+      .nav-resume {
+        margin: 10px 0 0 !important; text-align: center; justify-content: center;
+        min-height: 52px; padding: 14px 20px !important; display: flex;
+      }
       .nav-toggle { display: flex; }
-      .hero { padding: 110px 0 60px; }
+      section[id] { scroll-margin-top: 66px; }
+      .hero { padding: 118px 0 60px; }
       .hero-stats { gap: 24px; flex-wrap: wrap; }
       .hero-email { margin-left: 0; width: 100%; margin-top: 8px; }
       .about-grid { grid-template-columns: 1fr; gap: 32px; }
@@ -408,18 +556,26 @@
       section { padding: 70px 0; }
       .back-to-top { bottom: 20px; right: 20px; width: 38px; height: 38px; font-size: 1rem; }
     }
+    @media (min-width: 901px) {
+      section[id] { scroll-margin-top: 76px; }
+    }
     @media (prefers-reduced-motion: reduce) {
-      .reveal { opacity: 1; transform: none; transition: none; }
+      .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+      .skill-category .skill-item { opacity: 1; transform: none; transition: none; }
+      .section-header.reveal .section-label::before { transform: scaleX(1); transition: none; }
+      .hero h1 .accent { animation: none; }
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
 <body>
 
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
 <nav>
   <div class="container">
     <a href="#" class="nav-logo">Jensi<span>.</span></a>
-    <button class="nav-toggle" aria-label="Toggle navigation" id="navToggle">
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks" id="navToggle">
       <span></span><span></span><span></span>
     </button>
     <ul class="nav-links" id="navLinks">
@@ -471,7 +627,7 @@
       <p>A dedicated full-stack developer with a strong foundation in computer science and hands-on experience in cloud migration, microservices, and enterprise-grade applications.</p>
     </div>
     <div class="about-grid">
-      <div class="about-text reveal">
+      <div class="about-text reveal" data-anim="left">
         <p>I'm a Full Stack Developer skilled in Java, Spring Boot, ReactJS, Microservices, REST APIs, Cloud Migration (Azure), and CI/CD within Agile environments. Currently working as an Analyst, Software Engineer at <strong style="color:var(--text)">Northern Trust</strong> in Pune.</p>
         <p>I'm passionate about building scalable systems, clean architecture, and delivering features that make a real difference. From hackathon wins to enterprise cloud migrations, I bring a problem-solving mindset to every project.</p>
         <div class="skill-bar-group">
@@ -481,7 +637,7 @@
           <div class="skill-bar-item"><div class="skill-bar-header"><span class="name">Microservices / APIs</span><span class="pct">88%</span></div><div class="skill-bar-track"><div class="skill-bar-fill" data-width="88"></div></div></div>
         </div>
       </div>
-      <div class="about-details reveal">
+      <div class="about-details reveal" data-anim="right">
         <div class="about-detail-item">
           <div class="label">📍 Location</div>
           <div class="value">Pune, India</div>
@@ -714,7 +870,7 @@
       <p>Roles and recognition beyond the keyboard.</p>
     </div>
     <div class="extras-grid">
-      <div class="extra-card reveal">
+      <div class="extra-card reveal" data-anim="scale">
         <h3>📋 Leadership</h3>
         <ul>
           <li>Placement Coordinator <span class="sub">III Cell, Nirma University — Feb 2022 – May 2024</span></li>
@@ -722,7 +878,7 @@
           <li>Executive, CSI <span class="sub">Computer Society of India, Nirma University — Jun 2022 – Nov 2022</span></li>
         </ul>
       </div>
-      <div class="extra-card reveal">
+      <div class="extra-card reveal" data-anim="scale">
         <h3>🏅 Achievements</h3>
         <ul>
           <li>Runner-up, Mined Hackathon (National Level) <span class="sub">Track: D360 (Diamond Query) — 2022-23</span></li>
@@ -764,8 +920,16 @@
   // ─── Mobile nav ───
   const toggle = document.getElementById('navToggle');
   const navLinks = document.getElementById('navLinks');
-  toggle.addEventListener('click', () => navLinks.classList.toggle('active'));
-  document.addEventListener('click', e => { if (!e.target.closest('nav')) navLinks.classList.remove('active'); });
+  function setMenu(open) {
+    navLinks.classList.toggle('active', open);
+    toggle.setAttribute('aria-expanded', String(open));
+  }
+  toggle.addEventListener('click', e => {
+    e.stopPropagation();
+    setMenu(!navLinks.classList.contains('active'));
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('nav')) setMenu(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
 
   // ─── Nav active section highlight ───
   const navAnchors = document.querySelectorAll('.nav-links a:not(.nav-resume)');
@@ -781,20 +945,46 @@
     });
   });
 
-  // ─── Nav hide on scroll down ───
+  // ─── Nav: scrolled state, hide-on-scroll, progress bar ───
   let lastScroll = 0;
   const nav = document.querySelector('nav');
-  window.addEventListener('scroll', () => {
+  const progressBar = document.getElementById('scrollProgress');
+  let ticking = false;
+
+  function onScroll() {
     const current = window.scrollY;
-    if (current > 100) {
+
+    // Condensed / elevated nav once past the fold
+    nav.classList.toggle('scrolled', current > 24);
+
+    // Hide on the way down, reveal on the way up
+    if (current > 140) {
       nav.style.transform = current > lastScroll ? 'translateY(-100%)' : 'translateY(0)';
     } else {
       nav.style.transform = 'translateY(0)';
     }
     lastScroll = current;
-  });
+
+    // Reading progress
+    if (progressBar) {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = max > 0 ? (current / max) * 100 : 0;
+      progressBar.style.width = pct.toFixed(2) + '%';
+    }
+
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(onScroll);
+    }
+  }, { passive: true });
+  onScroll();
+
   document.querySelectorAll('.nav-links a').forEach(a => {
-    a.addEventListener('click', () => navLinks.classList.remove('active'));
+    a.addEventListener('click', () => setMenu(false));
   });
 
   // ─── Resume / print ───
