@@ -1,0 +1,48 @@
+name: Deploy verified feature image to dev-2
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Immutable GHCR ref produced by Store build image
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: deploy-jensi-dev2
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy selected GHCR image to dev-2
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+      url: https://jensi-bodrya-dev2.surge.sh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Jensi-Bodrya/portfolio-deploy
+          ref: main
+          path: deploy-chart
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: oras-project/setup-oras@v1
+      - name: Login to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: echo "$GHCR_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Deploy and verify
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          TARGET_IMAGE: ${{ inputs.image }}
+        run: python3 deploy-chart/scripts/deploy_oci.py --environment dev-2 --image "$TARGET_IMAGE"

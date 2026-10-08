@@ -1,0 +1,95 @@
+name: Store build image
+
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch/ref to build and store as an image
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-store:
+    name: Build and store immutable image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Resolve source metadata
+        id: source
+        run: |
+          echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Run existing CI checks
+        run: npm test
+
+      - name: Build static site artifact
+        env:
+          BRANCH: ${{ steps.source.outputs.branch }}
+          SHA: ${{ steps.source.outputs.sha }}
+        run: python3 scripts/build_artifact.py --out build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ORAS
+        uses: oras-project/setup-oras@v1
+
+      - name: Checkout deployment chart repo
+        uses: actions/checkout@v4
+        with:
+          repository: Jensi-Bodrya/portfolio-deploy
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: deploy-chart
+
+      - name: Publish OCI build image to GHCR
+        id: publish
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GHCR_OWNER: jensi-bodrya
+          SOURCE_BRANCH: ${{ steps.source.outputs.branch }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          python3 deploy-chart/scripts/publish_oci.py \
+            --source-dir build \
+            --branch "$SOURCE_BRANCH" \
+            --sha "$SOURCE_SHA"
+          IMAGE_ID=$(python3 -c "import sys; sys.path.insert(0, 'deploy-chart/scripts'); from lib import make_image_id; print(make_image_id('$SOURCE_BRANCH', '$SOURCE_SHA'))")
+          echo "image_ref=ghcr.io/jensi-bodrya/portfolio-images:$IMAGE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Write image reference to summary
+        env:
+          IMAGE_REF: ${{ steps.publish.outputs.image_ref }}
+          SOURCE_BRANCH: ${{ steps.source.outputs.branch }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          {
+            echo "### OCI image published to GHCR"
+            echo ""
+            echo "- **Image:** \`$IMAGE_REF\`"
+            echo "- **Branch:** \`$SOURCE_BRANCH\`"
+            echo "- **SHA:** \`$SOURCE_SHA\`"
+            echo ""
+            echo "Run **Deploy environment** in portfolio-deploy and paste the image ref to deploy any environment."
+          } >> "$GITHUB_STEP_SUMMARY"
